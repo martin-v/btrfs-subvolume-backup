@@ -171,7 +171,9 @@ done
 DATE="$(date '+%Y%m%d_%H:%M:%S')"
 
 [[ $# != 2 ]] && usage
-vol="$1"
+# The script require to run in the directory that contains the source volume.
+cd `dirname "$1"`
+vol=`basename "$1"`
 dest_pool="$2"
 
 # If unset, we give it the same value as pf, to allow the ls line at the
