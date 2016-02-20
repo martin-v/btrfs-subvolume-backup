@@ -182,10 +182,9 @@ dest_pool="$2"
 echo ${vol}${bckrot:-}.* | grep -q '\*' && bckrot=
 bckrot=${bckrot:-${pf}_ro}
 
-# shlock (from inn) does the right thing and grabs a lock for a dead process
-# (it checks the PID in the lock file and if it's not there, it
-# updates the PID with the value given to -p)
-if ! shlock -p $$ -f $lock; then
+# create lock
+exec 200>$lock
+if ! flock -n 200; then
     echo "$lock held for $PROG, quitting" >&2
     exit
 fi
