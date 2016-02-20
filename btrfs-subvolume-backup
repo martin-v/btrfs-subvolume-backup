@@ -42,9 +42,6 @@ Options:
 	--dest hostname: If present, ssh to that machine to make the copy.
 	--port|-p:       Port number for ssh (defaults to 22).
 	--postfix:	     postfix to add to snapshots
-	--bckrot:	     secondary set of snapshots to rotate out for that volume
-    		     (if the copy succeeds, its own snapshot history replaces an
-		     out of band backup snapshot rotation).
 	--diff:	     show an approximate diff between the snapshots
 
 This will snapshot volume_name in a btrfs pool, and send the diff
@@ -88,7 +85,7 @@ trap 'die "Error line $LINENO with status $?"' ERR
 init=""
 # Keep the last 5 snapshots by default
 keep=5
-TEMP=$(getopt --longoptions help,usage,init,keep:,dest:,port:,postfix:,bckrot:,diff,lockname: -o h,k:,d:,p:,b:,l: -- "$@") || usage
+TEMP=$(getopt --longoptions help,usage,init,keep:,dest:,port:,postfix:,diff,lockname: -o h,k:,d:,p:,l: -- "$@") || usage
 dest=localhost
 ssh=""
 pf=""
@@ -116,12 +113,6 @@ do
 	--lockname|-l)
 		shift
 		lock="/var/run/$1"
-		shift
-		;;
-
-	--bckrot|-b)
-		shift
-		bckrot=_$1
 		shift
 		;;
 
@@ -175,12 +166,6 @@ DATE="$(date '+%Y%m%d_%H:%M:%S')"
 cd `dirname "$1"`
 vol=`basename "$1"`
 dest_pool="$2"
-
-# If unset, we give it the same value as pf, to allow the ls line at the
-# end to skip processing of special snapshots to rotate.
-# If there are no snapshots with the given extension, unset that option
-echo ${vol}${bckrot:-}.* | grep -q '\*' && bckrot=
-bckrot=${bckrot:-${pf}_ro}
 
 # create lock
 exec 200>$lock
@@ -241,20 +226,13 @@ $ssh ln -snf $src_newsnaprw $dest_pool/${vol}${pf}_last_rw
 
 # How many snapshots to keep on the source btrfs pool (both read
 # only and read-write).
-# bckrot, if given, let you mix local rotating snapshots with
-# btrfs backup snapshots. This in turn allows rotating out hourly
-# snapshots when your snapshots to secondary disk have been working.
-# Allow ${vol}${bckrot}.* to expand to null to avoid having ls look for
-# a literal 'volname_daily.*' should none exist.
-shopt -s nullglob
-ls -rd ${vol}${pf}_ro.* ${vol}${bckrot}.* | sort -u | sort -r -t. -k2 | \
-		tail -n +$(( $keep + 1 ))| while read snap
+for snap in $(ls -rd ${vol}${pf}_ro* | tail -n +$(( $keep + 1 )))
 do
 	# Debugging
 	#echo btrfs subvolume delete "$snap"
 	btrfs subvolume delete "$snap" | grep -v 'Transaction commit:'
 done
-ls -rd ${vol}${pf}_rw.* | tail -n +$(( $keep + 1 ))| while read snap
+for snap in $(ls -rd ${vol}${pf}_rw.* | tail -n +$(( $keep + 1 )))
 do
 	btrfs subvolume delete "$snap" | grep -v 'Transaction commit:'
 done
