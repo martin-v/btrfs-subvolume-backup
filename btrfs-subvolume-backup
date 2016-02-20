@@ -1,12 +1,15 @@
 #!/bin/bash
 
-# By Marc MERLIN <marc_soft@merlins.org>
+# Original by Marc Merlin <marc_soft@merlins.org>
+# @ 2006 by Martin Vietz <btrfs-subvolume-backup@martin.vietz.eu>
 # License: Apache-2.0
 
-# Source: http://marc.merlins.org/linux/scripts/
+# Original source: http://marc.merlins.org/linux/scripts/
 # $Id: btrfs-subvolume-backup 1160 2015-08-03 15:16:49Z svnuser $
 #
-# Documentation and details at
+# Current source: https://github.com/martin-v/btrfs-subvolume-backup
+#
+# Original documentation and details at
 # http://marc.merlins.org/perso/btrfs/2014-03.html#Btrfs-Tips_-Doing-Fast-Incremental-Backups-With-Btrfs-Send-and-Receive
 
 # cron jobs might not have /sbin in their path.
@@ -200,7 +203,6 @@ failed=""
 if [[ -n "$init" ]]; then
 	ionice -c3 btrfs send "$src_newsnap" | $ssh ionice -c3 btrfs receive "$dest_pool/" || failed=1
 else
-	#echo "$src_snap" "$src_newsnap"
 	ionice -c3 btrfs send -p "$src_snap" "$src_newsnap" | $ssh ionice -c3 btrfs receive "$dest_pool/"\
 			|| failed=1
 fi
@@ -228,8 +230,6 @@ $ssh ln -snf $src_newsnaprw $dest_pool/${vol}${pf}_last_rw
 # only and read-write).
 for snap in $(ls -rd ${vol}${pf}_ro* | tail -n +$(( $keep + 1 )))
 do
-	# Debugging
-	#echo btrfs subvolume delete "$snap"
 	btrfs subvolume delete "$snap" | grep -v 'Transaction commit:'
 done
 for snap in $(ls -rd ${vol}${pf}_rw.* | tail -n +$(( $keep + 1 )))
@@ -239,7 +239,6 @@ done
 
 # Same thing for destination (assume the same number of snapshots to keep,
 # you can change this if you really want).
-
 if [[ -z "$ssh" ]]; then
 	for snap in $(ls -rd $dest_pool/${vol}${pf}_ro* | tail -n +$(( $keep + 1 )))
 	do
