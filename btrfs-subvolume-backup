@@ -30,22 +30,24 @@ usage() {
 Usage:
 cd /mnt/source_btrfs_pool
 $PROG
-	[--init]
-	[--keep|-k num]
-	[--dest hostname] [--port|p 22]
+	[--dest hostname]
 	[--diff]
+	[--init]
+	[--keep 5]
 	[--lockname lockfile (without /var/run prepended)]
+	[--port 22]
 	[--postfix foo]
 	volume_name /mnt/backup_btrfs_pool
 
 Options:
-	--init:          Print this help message and exit.
-	--lockname|-l:   Override lockfile in /var/run: $PROG
-	--keep num:      Keep the last snapshots for local backups (5 by default)
-	--dest hostname: If present, ssh to that machine to make the copy.
-	--port|-p:       Port number for ssh (defaults to 22).
-	--postfix:	     postfix to add to snapshots
-	--diff:	     show an approximate diff between the snapshots
+	--dest|-d [hostname]:  If present, push the backup over ssh to remote machine.
+	--diff:                Show an approximate diff between the snapshots.
+	--help|--usage|-h:     Print this help message and exit.
+	--init:                First run, creates a full backup.
+	--keep|-k [num]:       Keep the last snapshots for local backups (default: 5)
+	--lockname|-l [name]:  Change lockfile name in /var/run (default: $PROG).
+	--port|-p [port]:      Port number for ssh (default: 22).
+	--postfix [postfix]:   Add postfix to snapshots.
 
 This will snapshot volume_name in a btrfs pool, and send the diff
 between it and the previous snapshot (volume_name.last) to another btrfs
@@ -88,12 +90,13 @@ trap 'die "Error line $LINENO with status $?"' ERR
 init=""
 # Keep the last 5 snapshots by default
 keep=5
-TEMP=$(getopt --longoptions help,usage,init,keep:,dest:,port:,postfix:,diff,lockname: -o h,k:,d:,p:,l: -- "$@") || usage
+TEMP=$(getopt --longoptions dest:,diff,help,usage,init,keep:,lockname:,port:,postfix: -o d:,h,k:,l:,p: -- "$@") || usage
 dest=localhost
 ssh=""
 pf=""
 diff=""
 port=22
+
 
 # getopt quotes arguments with ' We use eval to get rid of that
 eval set -- $TEMP
@@ -101,15 +104,30 @@ eval set -- $TEMP
 while :
 do
 	case "$1" in
-	-h|--help|--usage)
+	--dest|-d)
+		shift
+		dest=$1
+		shift
+		;;
+
+	--diff)
+		diff=1
+		shift
+		;;
+
+	--help|--usage|-h)
 		usage
 		shift
 		;;
 
-	--postfix)
+	--init)
+		init=1
 		shift
-		pf=_$1
-		lock="$lock.$pf"
+		;;
+
+	--keep|-k)
+		shift
+		keep=$1
 		shift
 		;;
 
@@ -125,25 +143,10 @@ do
 		shift
 		;;
 
-	--keep|-k)
+	--postfix)
 		shift
-		keep=$1
-		shift
-		;;
-
-	--dest|-d)
-		shift
-		dest=$1
-		shift
-		;;
-
-	--init)
-		init=1
-		shift
-		;;
-
-	--diff)
-		diff=1
+		pf=_$1
+		lock="$lock.$pf"
 		shift
 		;;
 
