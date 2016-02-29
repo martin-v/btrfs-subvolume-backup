@@ -53,12 +53,12 @@ This will snapshot volume_name in a btrfs pool, and send the diff
 between it and the previous snapshot (volume_name.last) to another btrfs
 pool (on other drives)
 
-If your backup destination is another machine, you'll need to add a few
+If your backup destination is another machine, you´ll need to add a few
 ssh commands this script
 
 The num snapshots to keep is to give snapshots you can recover data from
 and they get deleted after num runs. Set to 0 to disable (one snapshot will
-be kept since it's required for the next diff to be computed).
+be kept since it´s required for the next diff to be computed).
 EOF
 	exit 0
 }
