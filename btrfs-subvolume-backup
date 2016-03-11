@@ -231,11 +231,11 @@ $ssh ln -snf $src_newsnaprw $dest_pool/${vol}${pf}_last_rw
 
 # How many snapshots to keep on the source btrfs pool (both read
 # only and read-write).
-for snap in $(ls -rd ${vol}${pf}_ro* | tail -n +$(( $keep + 1 )))
+for snap in $(ls -rd ${vol}${pf}_ro.[0-9-]*T[0-9:+]* | tail -n +$(( $keep + 1 )))
 do
 	btrfs subvolume delete "$snap" | grep -v 'Transaction commit:'
 done
-for snap in $(ls -rd ${vol}${pf}_rw.* | tail -n +$(( $keep + 1 )))
+for snap in $(ls -rd ${vol}${pf}_rw.[0-9-]*T[0-9:+]* | tail -n +$(( $keep + 1 )))
 do
 	btrfs subvolume delete "$snap" | grep -v 'Transaction commit:'
 done
@@ -243,20 +243,20 @@ done
 # Same thing for destination (assume the same number of snapshots to keep,
 # you can change this if you really want).
 if [[ -z "$ssh" ]]; then
-	for snap in $(ls -rd $dest_pool/${vol}${pf}_ro* | tail -n +$(( $keep + 1 )))
+	for snap in $(ls -rd $dest_pool/${vol}${pf}_ro.[0-9-]*T[0-9:+]* | tail -n +$(( $keep + 1 )))
 	do
 	btrfs subvolume delete "$snap" | grep -v 'Transaction commit:'
 	done
-	for snap in $(ls -rd $dest_pool/${vol}${pf}_rw* | tail -n +$(( $keep + 1 )))
+	for snap in $(ls -rd $dest_pool/${vol}${pf}_rw.[0-9-]*T[0-9:+]* | tail -n +$(( $keep + 1 )))
 	do
 	btrfs subvolume delete "$snap" | grep -v 'Transaction commit:'
 	done
 else
-	for snap in $($ssh ls -rd $dest_pool/${vol}${pf}_'ro*' | tail -n +$(( $keep + 1 )))
+	for snap in $($ssh ls -rd $dest_pool/${vol}${pf}_'ro.[0-9-]*T[0-9:+]*' | tail -n +$(( $keep + 1 )))
 	do
 	$ssh btrfs subvolume delete "$snap" | grep -v 'Transaction commit:'
 	done
-	for snap in $($ssh ls -rd $dest_pool/${vol}${pf}_'rw*' | tail -n +$(( $keep + 1 )))
+	for snap in $($ssh ls -rd $dest_pool/${vol}${pf}_'rw.[0-9-]*T[0-9:+]*' | tail -n +$(( $keep + 1 )))
 	do
 	$ssh btrfs subvolume delete "$snap" | grep -v 'Transaction commit:'
 	done
