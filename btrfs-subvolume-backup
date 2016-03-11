@@ -225,6 +225,7 @@ $ssh btrfs subvolume snapshot "$dest_pool/$src_newsnap" "$dest_pool/$src_newsnap
 
 # Keep track of the last snapshot to send a diff against.
 ln -snf $src_newsnap ${vol}${pf}_last
+$ssh ln -snf $src_newsnap $dest_pool/${vol}${pf}_last
 # The rw version can be used for mounting with subvol=vol_last_rw
 ln -snf $src_newsnaprw ${vol}${pf}_last_rw
 $ssh ln -snf $src_newsnaprw $dest_pool/${vol}${pf}_last_rw
