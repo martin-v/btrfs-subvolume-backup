@@ -165,7 +165,7 @@ done
 [[ "$dest" != localhost ]] && ssh="ssh -p$port $dest"
 
 
-DATE="$(date --iso-8601=m)" # e.g. 2016-02-20T21:29+0100
+DATE="$(date --iso-8601=s)" # e.g. 2016-02-20T21:29:34+0100
 
 [[ $# != 2 ]] && usage
 # The script require to run in the directory that contains the source volume.
