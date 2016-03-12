@@ -4,8 +4,8 @@ set -o nounset
 set -o errexit
 set -o pipefail
 
-umount "$LIVE_DIR"
-umount "$BACKUP_DIR"
+umount "$ORIGIN"
+umount "$BACKUP"
 
 
 kill "$(cat kerneltail.pid)"
